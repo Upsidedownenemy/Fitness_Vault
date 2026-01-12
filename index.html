@@ -179,12 +179,15 @@
     </div>
 
     <script>
-        let fbConfig = {};
-        try {
-            fbConfig = JSON.parse(__firebase_config);
-        } catch(e) {
-            console.error("Config missing. Ensure you are running this in the authorized environment.");
-        }
+        // Use the explicit configuration provided, or fall back to environment variable
+        const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDBqYibQfxlZmi-mF2CP8G3aa_pETdK9qQ",
+            authDomain: "f-tness-tracker.firebaseapp.com",
+            projectId: "f-tness-tracker",
+            storageBucket: "f-tness-tracker.firebasestorage.app",
+            messagingSenderId: "746828310290",
+            appId: "1:746828310290:web:66d9b477e78e6ad2deb5cb"
+        };
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'fitness-vault-production';
         
@@ -220,7 +223,12 @@
                 } else {
                     const savedU = localStorage.getItem('vault_u');
                     if (!savedU) {
-                        await auth.signInAnonymously().catch(() => setStatus("ERROR", "red"));
+                        // Priority 1: Auth token from environment
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token).catch(() => auth.signInAnonymously());
+                        } else {
+                            await auth.signInAnonymously().catch(() => setStatus("ERROR", "red"));
+                        }
                     } else {
                         document.getElementById('authOverlay').classList.remove('hidden');
                     }
